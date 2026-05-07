@@ -307,10 +307,11 @@ class Visualizer():
                             name=m_viz_name
                                 )
 
-    def visualize(self, 
-                  measurement_names: List[str] = [], 
+    def visualize(self,
+                  measurement_names: List[str] = [],
                   landmark_names: List[str] = [],
-                  title="Measurement visualization"
+                  title="Measurement visualization",
+                  show: bool = True
                   ):
         '''
         Visualize the body model with measurements, landmarks and joints.
@@ -371,7 +372,8 @@ class Visualizer():
                             title=title,
                             )
 
-        fig.show()
+        if show:
+            fig.show()
         return fig
 
 

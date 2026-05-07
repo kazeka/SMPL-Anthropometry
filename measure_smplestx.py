@@ -88,7 +88,7 @@ def main():
     if not args.no_viz:
         first_name, first_m = next(iter(results.items()))
         print(f"\nVisualising {first_name} …")
-        fig = first_m.visualize(title=first_name)
+        fig = first_m.visualize(title=first_name, show=False)
 
         # write figure to a temp HTML file and serve it so the
         # visualisation stays live until the user quits the script
