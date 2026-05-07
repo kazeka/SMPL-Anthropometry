@@ -21,7 +21,6 @@ import http.server
 import os
 import tempfile
 import threading
-import webbrowser
 from pathlib import Path
 
 import numpy as np
@@ -107,10 +106,13 @@ def main():
         thread = threading.Thread(target=httpd.serve_forever, daemon=True)
         thread.start()
 
-        url = f"http://localhost:{port}/{html_file}"
-        print(f"  Serving at {url}")
+        import socket
+        local_ip = socket.gethostbyname(socket.gethostname())
+        url_local = f"http://localhost:{port}/{html_file}"
+        url_network = f"http://{local_ip}:{port}/{html_file}"
+        print(f"\n  Local:   {url_local}")
+        print(f"  Network: {url_network}")
         os.chdir(serve_dir)
-        webbrowser.open(url)
 
         try:
             input("\nPress Enter (or Ctrl+C) to exit …\n")
