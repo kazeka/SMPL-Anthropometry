@@ -370,8 +370,9 @@ class Visualizer():
                             width=1000, height=700,
                             title=title,
                             )
-            
+
         fig.show()
+        return fig
 
 
 def viz_smplx_joints(visualize_body=True,fig=None,show=True,title="SMPLX joints"):

@@ -17,8 +17,12 @@ Usage:
 """
 
 import argparse
+import http.server
+import os
+import tempfile
+import threading
+import webbrowser
 from pathlib import Path
-from pprint import pprint
 
 import numpy as np
 import pandas as pd
@@ -70,18 +74,51 @@ def main():
         results[npz.stem] = measure_npz(npz, gender=args.gender)
 
     df = summarise(results)
-    print("\n=== Measurements (cm) ===")
-    print(df.to_string())
+    for file_name, m in results.items():
+        print(f"\n=== {file_name} ===")
+        for label, value in m.labeled_measurements.items():
+            name = m.labels2names[label]
+            print(f"  {label}  {name:<35} {value:.1f} cm")
 
     if len(results) > 1:
         print("\n=== Mean across files ===")
-        pprint({col: round(df[col].mean(), 1) for col in df.columns})
+        for col in df.columns:
+            label, name = col.split(" ", 1)
+            print(f"  {label}  {name:<35} {df[col].mean():.1f} cm")
 
     if not args.no_viz:
-        # visualise the first (or only) result
         first_name, first_m = next(iter(results.items()))
         print(f"\nVisualising {first_name} …")
-        first_m.visualize(title=first_name)
+        fig = first_m.visualize(title=first_name)
+
+        # write figure to a temp HTML file and serve it so the
+        # visualisation stays live until the user quits the script
+        tmp = tempfile.NamedTemporaryFile(suffix=".html", delete=False)
+        fig.write_html(tmp.name)
+        tmp.close()
+
+        serve_dir = os.path.dirname(tmp.name)
+        html_file = os.path.basename(tmp.name)
+
+        handler = http.server.SimpleHTTPRequestHandler
+        httpd = http.server.HTTPServer(("0.0.0.0", 0), handler)
+        port = httpd.server_address[1]
+
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+
+        url = f"http://localhost:{port}/{html_file}"
+        print(f"  Serving at {url}")
+        os.chdir(serve_dir)
+        webbrowser.open(url)
+
+        try:
+            input("\nPress Enter (or Ctrl+C) to exit …\n")
+        except KeyboardInterrupt:
+            pass
+        finally:
+            httpd.shutdown()
+            os.unlink(tmp.name)
 
 
 if __name__ == "__main__":
