@@ -63,11 +63,13 @@ class Measurer():
     All the measurements are expressed in cm.
     '''
 
-    def __init__(self):
+    def __init__(self, approximate_circumferences: bool = True):
         self.verts = None
         self.faces = None
         self.joints = None
         self.gender = None
+
+        self.approximate_circumferences = approximate_circumferences
 
         self.measurements = {}
         self.height_normalized_measurements = {}
@@ -107,7 +109,12 @@ class Measurer():
 
                 value = self.measure_circumference(m_name)
                 self.measurements[m_name] = value
-    
+
+            elif self.measurement_types[m_name] == MeasurementType().GEODESIC_LENGTH:
+
+                value = self.measure_geodesic_length(m_name)
+                self.measurements[m_name] = value
+
             else:
                 print(f"Measurement {m_name} not defined")
 
@@ -136,6 +143,27 @@ class Measurer():
         landmark_points = np.vstack(landmark_points)[None,...]
 
         return self._get_dist(landmark_points)
+
+    def measure_geodesic_length(self, measurement_name: str) -> float:
+        import gdist
+
+        lm_inds = self.geodesic_length_definitions[measurement_name]
+
+        def _to_indices(lm):
+            if isinstance(lm, tuple):
+                return np.array(list(lm), dtype=np.int32)
+            return np.array([lm], dtype=np.int32)
+
+        src = _to_indices(lm_inds[0])
+        tgt = _to_indices(lm_inds[1])
+
+        distances = gdist.compute_gdist(
+            self.verts.astype(np.float64),
+            self.faces.astype(np.int32),
+            source_indices=src,
+            target_indices=tgt
+        )
+        return float(np.min(distances)) * 100  # metres → cm
 
     @staticmethod
     def _get_dist(verts: np.ndarray) -> float:
@@ -192,9 +220,10 @@ class Measurer():
                                                  self.circumf_2_bodypart,
                                                  self.face_segmentation)
         
-        slice_segments_hull = convex_hull_from_3D_points(slice_segments)
+        if self.approximate_circumferences:
+            slice_segments = convex_hull_from_3D_points(slice_segments)
 
-        return self._get_dist(slice_segments_hull)
+        return self._get_dist(slice_segments)
 
     def height_normalize_measurements(self, new_height: float):
         ''' 
@@ -289,6 +318,7 @@ class Measurer():
                         measurements=self.measurements,
                         measurement_types=self.measurement_types,
                         length_definitions=self.length_definitions,
+                        geodesic_length_definitions=self.geodesic_length_definitions,
                         circumf_definitions=self.circumf_definitions,
                         joint2ind=self.joint2ind,
                         circumf_2_bodypart=self.circumf_2_bodypart,
@@ -331,6 +361,7 @@ class MeasureSMPL(Measurer):
         self.landmarks = SMPL_LANDMARK_INDICES
         self.measurement_types = MEASUREMENT_TYPES
         self.length_definitions = SMPLMeasurementDefinitions().LENGTHS
+        self.geodesic_length_definitions = SMPLMeasurementDefinitions().GEODESIC_LENGTHS
         self.circumf_definitions = SMPLMeasurementDefinitions().CIRCUMFERENCES
         self.circumf_2_bodypart = SMPLMeasurementDefinitions().CIRCUMFERENCE_TO_BODYPARTS
         self.all_possible_measurements = SMPLMeasurementDefinitions().possible_measurements
@@ -407,6 +438,7 @@ class MeasureSMPLX(Measurer):
         self.landmarks = SMPLX_LANDMARK_INDICES
         self.measurement_types = MEASUREMENT_TYPES
         self.length_definitions = SMPLXMeasurementDefinitions().LENGTHS
+        self.geodesic_length_definitions = SMPLXMeasurementDefinitions().GEODESIC_LENGTHS
         self.circumf_definitions = SMPLXMeasurementDefinitions().CIRCUMFERENCES
         self.circumf_2_bodypart = SMPLXMeasurementDefinitions().CIRCUMFERENCE_TO_BODYPARTS
         self.all_possible_measurements = SMPLXMeasurementDefinitions().possible_measurements

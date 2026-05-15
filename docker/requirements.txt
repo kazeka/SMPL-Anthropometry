@@ -8,3 +8,4 @@ scikit-learn==1.0.2
 plotly==5.10.0
 pandas==1.3.5
 tqdm==4.66.1
+gdist>=1.0

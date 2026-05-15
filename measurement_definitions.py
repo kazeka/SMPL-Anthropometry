@@ -25,6 +25,7 @@ STANDARD_LABELS = {
 class MeasurementType():
     CIRCUMFERENCE = "circumference"
     LENGTH = "length"
+    GEODESIC_LENGTH = "geodesic_length"
 
 
 MEASUREMENT_TYPES = {
@@ -48,7 +49,8 @@ MEASUREMENT_TYPES = {
         "shoulder breadth": MeasurementType.LENGTH,
 
         "arm length (shoulder to elbow)": MeasurementType.LENGTH,
-        "arm length (spine to wrist)": MeasurementType.LENGTH,
+        "arm length (spine to wrist)": MeasurementType.GEODESIC_LENGTH,
+        "apex adjustment": MeasurementType.GEODESIC_LENGTH,
         "crotch height": MeasurementType.LENGTH,
         "Hip circumference max height": MeasurementType.LENGTH
     }
@@ -115,15 +117,12 @@ class SMPLMeasurementDefinitions():
                     (SMPL_LANDMARK_INDICES["PUBIC_BONE"],
                      SMPL_LANDMARK_INDICES["HEELS"]
                     ),
-                # FIXME: implement geodesic distance for this measurement
-                "arm length (spine to wrist)": 
-                    (
-                    #  SMPL_LANDMARK_INDICES["SHOULDER_TOP"], 
-                    #  SMPL_LANDMARK_INDICES["LEFT_WRIST"]
-                        SMPL_LANDMARK_INDICES["Cervicale"],
-                        SMPL_LANDMARK_INDICES["Rt. Acromion"],
-                        SMPL_LANDMARK_INDICES["Rt. Humeral Lateral Epicn"],
-                        SMPL_LANDMARK_INDICES["Rt. Ulnar Styloid"]
+               }
+
+    GEODESIC_LENGTHS = {
+                "arm length (spine to wrist)":
+                    (SMPL_LANDMARK_INDICES["Cervicale"],
+                     SMPL_LANDMARK_INDICES["Rt. Ulnar Styloid"]
                     ),
                }
 
@@ -166,7 +165,7 @@ class SMPLMeasurementDefinitions():
                     
                     }
     
-    possible_measurements = list(LENGTHS.keys()) + list(CIRCUMFERENCES.keys())
+    possible_measurements = list(LENGTHS.keys()) + list(CIRCUMFERENCES.keys()) + list(GEODESIC_LENGTHS.keys())
 
     CIRCUMFERENCE_TO_BODYPARTS = {
         "head circumference": "head",
@@ -271,8 +270,15 @@ class SMPLXMeasurementDefinitions():
                                     "JOINTS":["pelvis","spine3"]},      
                     
                     }
-    
-    possible_measurements = list(LENGTHS.keys()) + list(CIRCUMFERENCES.keys())
+
+    GEODESIC_LENGTHS = {
+                "apex adjustment":
+                    (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"]
+                    ),
+               }
+
+    possible_measurements = list(LENGTHS.keys()) + list(CIRCUMFERENCES.keys()) + list(GEODESIC_LENGTHS.keys())
 
     CIRCUMFERENCE_TO_BODYPARTS = {
         "head circumference": "head",

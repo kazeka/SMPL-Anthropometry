@@ -33,6 +33,7 @@ class Visualizer():
                  measurements: dict,
                  measurement_types: dict,
                  length_definitions: dict,
+                 geodesic_length_definitions: dict,
                  circumf_definitions: dict,
                  joint2ind: dict,
                  circumf_2_bodypart: dict,
@@ -52,6 +53,7 @@ class Visualizer():
         self.measurements = measurements
         self.measurement_types = measurement_types
         self.length_definitions = length_definitions
+        self.geodesic_length_definitions = geodesic_length_definitions
         self.circumf_definitions = circumf_definitions
         self.joint2ind = joint2ind
         self.circumf_2_bodypart = circumf_2_bodypart
@@ -242,6 +244,61 @@ class Visualizer():
                                         name=m_viz_name
                                         )
         
+    def create_measurement_geodesic_length_plot(self,
+                                                measurement_name: str,
+                                                verts: np.ndarray,
+                                                faces: np.ndarray,
+                                                color: str):
+        import gdist
+
+        lm_inds = self.geodesic_length_definitions[measurement_name]
+
+        def _primary(lm):
+            return lm[0] if isinstance(lm, tuple) else lm
+
+        src_idx = _primary(lm_inds[0])
+        tgt_idx = _primary(lm_inds[1])
+
+        # build per-vertex adjacency from faces
+        adj = [[] for _ in range(len(verts))]
+        for f in faces:
+            adj[f[0]].extend([f[1], f[2]])
+            adj[f[1]].extend([f[0], f[2]])
+            adj[f[2]].extend([f[0], f[1]])
+
+        # geodesic distances from src to every vertex
+        dists = gdist.compute_gdist(
+            verts.astype(np.float64),
+            faces.astype(np.int32),
+            source_indices=np.array([src_idx], dtype=np.int32),
+        )
+
+        # gradient descent from tgt back to src along distance field
+        path = [tgt_idx]
+        current = tgt_idx
+        while current != src_idx and len(path) < len(verts):
+            next_v = min(adj[current], key=lambda v: dists[v])
+            if dists[next_v] >= dists[current]:
+                break
+            path.append(next_v)
+            current = next_v
+
+        path_verts = verts[path]
+
+        if measurement_name in self.measurements:
+            m_viz_name = f"{measurement_name}: {self.measurements[measurement_name]:.2f}cm"
+        else:
+            m_viz_name = measurement_name
+
+        return go.Scatter3d(
+            x=path_verts[:, 0],
+            y=path_verts[:, 1],
+            z=path_verts[:, 2],
+            mode="lines",
+            line=dict(color=color, width=8),
+            name=m_viz_name,
+        )
+
     def create_measurement_circumference_plot(self,
                                               measurement_name: str,
                                               verts: np.ndarray,
@@ -357,13 +414,20 @@ class Visualizer():
                 if self.measurement_types[m_name] == MeasurementType().LENGTH:
                     measurement_plot = self.create_measurement_length_plot(measurement_name=m_name,
                                                                         verts=self.verts,
-                                                                        color=measurement_colors[m_name])     
+                                                                        color=measurement_colors[m_name])
                 elif self.measurement_types[m_name] == MeasurementType().CIRCUMFERENCE:
                     measurement_plot = self.create_measurement_circumference_plot(measurement_name=m_name,
                                                                                     verts=self.verts,
                                                                                     faces=self.faces,
                                                                                     color=measurement_colors[m_name])
-                
+                elif self.measurement_types[m_name] == MeasurementType().GEODESIC_LENGTH:
+                    measurement_plot = self.create_measurement_geodesic_length_plot(measurement_name=m_name,
+                                                                                    verts=self.verts,
+                                                                                    faces=self.faces,
+                                                                                    color=measurement_colors[m_name])
+                else:
+                    continue
+
                 fig.add_trace(measurement_plot)
                 
 
