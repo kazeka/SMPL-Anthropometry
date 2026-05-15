@@ -24,11 +24,13 @@ STANDARD_LABELS = {
 PROTECH_LABELS = {
         'A': 'height',
         'B': 'neck circumference',
-        'C': 'chest circumference',
+        'C': 'upper chest',
+        'D': 'chest circumference',
         'E': 'waist circumference',
         'F': 'hip circumference',
         'G': 'front length',
-        'H': 'apex adjustment'
+        'H': 'skirt length',
+        'I': 'apex adjustment'
     }
 
 
