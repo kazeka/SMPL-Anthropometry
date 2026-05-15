@@ -154,7 +154,13 @@ class Measurer():
     def measure_geodesic_length(self, measurement_name: str) -> float:
         import gdist
 
-        lm_inds = self.geodesic_length_definitions[measurement_name]
+        defn = self.geodesic_length_definitions[measurement_name]
+        if isinstance(defn, dict):
+            lm_inds = defn["LANDMARKS"]
+            offset_cm = defn.get("OFFSET_CM", 0.0)
+        else:
+            lm_inds = defn
+            offset_cm = 0.0
 
         def _to_indices(lm):
             if isinstance(lm, tuple):
@@ -173,7 +179,7 @@ class Measurer():
             )
             total += float(np.min(distances))
 
-        return total * 100  # metres → cm
+        return total * 100 + offset_cm  # metres → cm, plus any fixed offset
 
     @staticmethod
     def _get_dist(verts: np.ndarray) -> float:

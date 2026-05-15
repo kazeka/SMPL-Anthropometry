@@ -167,8 +167,8 @@ class Visualizer():
 
         plots = []
 
-        landmark_colors = dict(zip(self.landmarks.keys(),
-                                px.colors.qualitative.Alphabet))
+        palette = (px.colors.qualitative.Alphabet + px.colors.qualitative.Dark24) * 4
+        landmark_colors = {name: palette[i] for i, name in enumerate(self.landmarks.keys())}
 
         for lm_name in landmark_names:
             if lm_name not in self.landmarks.keys():
@@ -252,7 +252,8 @@ class Visualizer():
         from scipy.sparse import csr_matrix
         from scipy.sparse.csgraph import dijkstra
 
-        lm_inds = self.geodesic_length_definitions[measurement_name]
+        defn = self.geodesic_length_definitions[measurement_name]
+        lm_inds = defn["LANDMARKS"] if isinstance(defn, dict) else defn
 
         def _primary(lm):
             return lm[0] if isinstance(lm, tuple) else lm

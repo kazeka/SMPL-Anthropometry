@@ -62,6 +62,9 @@ MEASUREMENT_TYPES = {
         "arm length (spine to wrist)": MeasurementType.GEODESIC_LENGTH,
         "apex adjustment": MeasurementType.GEODESIC_LENGTH,
         "front length": MeasurementType.GEODESIC_LENGTH,
+        "upper chest": MeasurementType.GEODESIC_LENGTH,
+        "vest length": MeasurementType.GEODESIC_LENGTH,
+        "skirt length": MeasurementType.GEODESIC_LENGTH,
         "crotch height": MeasurementType.LENGTH,
         "Hip circumference max height": MeasurementType.LENGTH
     }
@@ -291,6 +294,21 @@ class SMPLXMeasurementDefinitions():
                     (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
                      SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"],
                      SMPLX_LANDMARK_INDICES["RIGHT_KNEE"]
+                    ),
+                "upper chest":
+                    (SMPLX_LANDMARK_INDICES["RIGHT_ARMPIT"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"],
+                     SMPLX_LANDMARK_INDICES["LEFT_NIPPLE"],
+                     SMPLX_LANDMARK_INDICES["LEFT_ARMPIT"]
+                    ),
+                "vest length":
+                    (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_VEST_EDGE"]
+                    ),
+                "skirt length":
+                    (SMPLX_LANDMARK_INDICES["SKIRT_RIGHT_TOP"],
+                     SMPLX_LANDMARK_INDICES["SKIRT_RIGHT_BOTTOM"]
                     ),
                }
 

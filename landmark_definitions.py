@@ -64,7 +64,12 @@ SMPLX_LANDMARK_INDICES = {"HEAD_TOP": 8976,
                     "LEFT_CALF": 3732,
                     "LEFT_ANKLE": 5880,
                     "TOP_RIGHT_SHOULDER": 6136,
-                    "RIGHT_KNEE": 3676
+                    "RIGHT_KNEE": 3676,
+                    "RIGHT_ARMPIT": 6672,
+                    "LEFT_ARMPIT": 3926,
+                    "RIGHT_VEST_EDGE": 6856,
+                    "SKIRT_RIGHT_TOP": 6025,
+                    "SKIRT_RIGHT_BOTTOM": 6400
                     }
 
 SMPLX_LANDMARK_INDICES["HEELS"] = (SMPLX_LANDMARK_INDICES["LEFT_HEEL"], 
