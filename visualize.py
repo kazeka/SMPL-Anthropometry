@@ -249,7 +249,8 @@ class Visualizer():
                                                 verts: np.ndarray,
                                                 faces: np.ndarray,
                                                 color: str):
-        import gdist
+        from scipy.sparse import csr_matrix
+        from scipy.sparse.csgraph import dijkstra
 
         lm_inds = self.geodesic_length_definitions[measurement_name]
 
@@ -259,29 +260,28 @@ class Visualizer():
         src_idx = _primary(lm_inds[0])
         tgt_idx = _primary(lm_inds[1])
 
-        # build per-vertex adjacency from faces
-        adj = [[] for _ in range(len(verts))]
+        # build sparse edge graph weighted by Euclidean edge length
+        n = len(verts)
+        rows, cols, data = [], [], []
         for f in faces:
-            adj[f[0]].extend([f[1], f[2]])
-            adj[f[1]].extend([f[0], f[2]])
-            adj[f[2]].extend([f[0], f[1]])
+            for a, b in [(0, 1), (1, 2), (2, 0)]:
+                va, vb = int(f[a]), int(f[b])
+                d = float(np.linalg.norm(verts[va] - verts[vb]))
+                rows += [va, vb]
+                cols += [vb, va]
+                data += [d, d]
+        graph = csr_matrix((data, (rows, cols)), shape=(n, n))
 
-        # geodesic distances from src to every vertex
-        dists = gdist.compute_gdist(
-            verts.astype(np.float64),
-            faces.astype(np.int32),
-            source_indices=np.array([src_idx], dtype=np.int32),
-        )
+        _, predecessors = dijkstra(graph, indices=src_idx, return_predecessors=True)
 
-        # gradient descent from tgt back to src along distance field
-        path = [tgt_idx]
+        # trace path from tgt back to src
+        path = []
         current = tgt_idx
-        while current != src_idx and len(path) < len(verts):
-            next_v = min(adj[current], key=lambda v: dists[v])
-            if dists[next_v] >= dists[current]:
-                break
-            path.append(next_v)
-            current = next_v
+        while current != src_idx and current != -9999:
+            path.append(current)
+            current = predecessors[current]
+        path.append(src_idx)
+        path.reverse()
 
         path_verts = verts[path]
 
