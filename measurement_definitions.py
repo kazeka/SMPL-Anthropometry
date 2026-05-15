@@ -21,6 +21,16 @@ STANDARD_LABELS = {
         'P': 'height'
     }
 
+PROTECH_LABELS = {
+        'A': 'height',
+        'B': 'neck circumference',
+        'C': 'chest circumference',
+        'E': 'waist circumference',
+        'F': 'hip circumference',
+        'G': 'front length',
+        'H': 'apex adjustment'
+    }
+
 
 class MeasurementType():
     CIRCUMFERENCE = "circumference"
@@ -279,6 +289,7 @@ class SMPLXMeasurementDefinitions():
                     ),
                 "front length":
                     (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"],
                      SMPLX_LANDMARK_INDICES["RIGHT_KNEE"]
                     ),
                }

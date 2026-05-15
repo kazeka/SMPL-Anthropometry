@@ -257,10 +257,7 @@ class Visualizer():
         def _primary(lm):
             return lm[0] if isinstance(lm, tuple) else lm
 
-        src_idx = _primary(lm_inds[0])
-        tgt_idx = _primary(lm_inds[1])
-
-        # build sparse edge graph weighted by Euclidean edge length
+        # build sparse edge graph weighted by Euclidean edge length (once for all segments)
         n = len(verts)
         rows, cols, data = [], [], []
         for f in faces:
@@ -272,18 +269,26 @@ class Visualizer():
                 data += [d, d]
         graph = csr_matrix((data, (rows, cols)), shape=(n, n))
 
-        _, predecessors = dijkstra(graph, indices=src_idx, return_predecessors=True)
+        def _trace_segment(src_idx, tgt_idx):
+            _, predecessors = dijkstra(graph, indices=src_idx, return_predecessors=True)
+            path = []
+            current = tgt_idx
+            while current != src_idx and current != -9999:
+                path.append(current)
+                current = predecessors[current]
+            path.append(src_idx)
+            path.reverse()
+            return path
 
-        # trace path from tgt back to src
-        path = []
-        current = tgt_idx
-        while current != src_idx and current != -9999:
-            path.append(current)
-            current = predecessors[current]
-        path.append(src_idx)
-        path.reverse()
+        # concatenate paths for all segments (waypoints are shared, no gap needed)
+        full_path = []
+        for i in range(len(lm_inds) - 1):
+            segment = _trace_segment(_primary(lm_inds[i]), _primary(lm_inds[i + 1]))
+            if full_path:
+                segment = segment[1:]  # drop duplicate waypoint vertex
+            full_path.extend(segment)
 
-        path_verts = verts[path]
+        path_verts = verts[full_path]
 
         if measurement_name in self.measurements:
             m_viz_name = f"{measurement_name}: {self.measurements[measurement_name]:.2f}cm"

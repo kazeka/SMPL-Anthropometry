@@ -161,16 +161,19 @@ class Measurer():
                 return np.array(list(lm), dtype=np.int32)
             return np.array([lm], dtype=np.int32)
 
-        src = _to_indices(lm_inds[0])
-        tgt = _to_indices(lm_inds[1])
+        verts_f64 = self.verts.astype(np.float64)
+        faces_i32 = self.faces.astype(np.int32)
 
-        distances = gdist.compute_gdist(
-            self.verts.astype(np.float64),
-            self.faces.astype(np.int32),
-            source_indices=src,
-            target_indices=tgt
-        )
-        return float(np.min(distances)) * 100  # metres → cm
+        total = 0.0
+        for i in range(len(lm_inds) - 1):
+            distances = gdist.compute_gdist(
+                verts_f64, faces_i32,
+                source_indices=_to_indices(lm_inds[i]),
+                target_indices=_to_indices(lm_inds[i + 1])
+            )
+            total += float(np.min(distances))
+
+        return total * 100  # metres → cm
 
     @staticmethod
     def _get_dist(verts: np.ndarray) -> float:

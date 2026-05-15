@@ -28,7 +28,7 @@ import pandas as pd
 import torch
 
 from measure import MeasureBody
-from measurement_definitions import STANDARD_LABELS
+from measurement_definitions import STANDARD_LABELS, PROTECH_LABELS
 
 
 def measure_npz(npz_path, gender: str = "NEUTRAL", posed: bool = False) -> MeasureBody:
@@ -46,7 +46,7 @@ def measure_npz(npz_path, gender: str = "NEUTRAL", posed: bool = False) -> Measu
                              body_pose=body_pose,
                              global_orient=global_orient)
     measurer.measure(measurer.all_possible_measurements)
-    measurer.label_measurements(STANDARD_LABELS)
+    measurer.label_measurements(PROTECH_LABELS)
     return measurer
 
 
