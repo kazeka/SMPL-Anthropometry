@@ -30,6 +30,16 @@ import torch
 from measure import MeasureBody
 from measurement_definitions import STANDARD_LABELS, PROTECH_LABELS
 
+GROUND_TRUTH = {
+    "height":             181.5,
+    "neck circumference":  41.0,
+    "chest circumference": 112.0,
+    "waist circumference":  98.0,
+    "hip circumference":   104.0,
+    "front length":        117.0,
+    "skirt length":         62.0,
+}
+
 
 def measure_npz(npz_path, gender: str = "NEUTRAL", posed: bool = False) -> MeasureBody:
     data = np.load(npz_path)
@@ -94,6 +104,16 @@ def main():
         for col in df.columns:
             label, name = col.split(" ", 1)
             print(f"  {label}  {name:<35} {df[col].mean():.1f} cm")
+
+        print("\n=== MAE vs ground truth ===")
+        for m_name, gt_val in GROUND_TRUTH.items():
+            values = [m.measurements[m_name] for m in results.values()
+                      if m_name in m.measurements]
+            if not values:
+                continue
+            mae = sum(abs(v - gt_val) for v in values) / len(values)
+            pct = mae / gt_val * 100
+            print(f"  {m_name:<35} {mae:.1f} cm  ({pct:.1f}%)")
 
     if not args.no_viz:
         first_name, first_m = next(iter(results.items()))

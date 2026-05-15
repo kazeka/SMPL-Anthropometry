@@ -24,7 +24,6 @@ STANDARD_LABELS = {
 PROTECH_LABELS = {
         'A': 'height',
         'B': 'neck circumference',
-        'C': 'upper chest',
         'D': 'chest circumference',
         'E': 'waist circumference',
         'F': 'hip circumference',
