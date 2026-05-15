@@ -16,17 +16,24 @@ from joint_definitions import *
 
 
 
-def set_shape(model, shape_coefs):
+def set_shape(model, shape_coefs, body_pose=None, global_orient=None):
     '''
     Set shape of body model.
     :param model: smplx body model
     :param shape_coefs: torch.tensor dim (10,)
+    :param body_pose: optional torch.tensor (1, 63) axis-angle body pose
+    :param global_orient: optional torch.tensor (1, 3) axis-angle global orientation
 
     Return
     shaped smplx body model
     '''
     shape_coefs = shape_coefs.to(torch.float32)
-    return model(betas=shape_coefs, return_verts=True)
+    kwargs = dict(betas=shape_coefs, return_verts=True)
+    if body_pose is not None:
+        kwargs["body_pose"] = body_pose.to(torch.float32)
+    if global_orient is not None:
+        kwargs["global_orient"] = global_orient.to(torch.float32)
+    return model(**kwargs)
 
 def create_model(model_type, model_root, gender, num_betas=10, num_thetas=24):
     '''
@@ -392,22 +399,28 @@ class MeasureSMPL(Measurer):
 
     def from_body_model(self,
                         gender: str,
-                        shape: torch.tensor):
+                        shape: torch.tensor,
+                        body_pose: torch.tensor = None,
+                        global_orient: torch.tensor = None):
         '''
-        Construct body model from given gender and shape params 
+        Construct body model from given gender and shape params
         of SMPl model.
         :param gender: str, MALE or FEMALE or NEUTRAL
         :param shape: torch.tensor, (1,10) beta parameters
                                     for SMPL model
-        '''  
+        :param body_pose: optional torch.tensor (1,63) axis-angle body pose
+        :param global_orient: optional torch.tensor (1,3) axis-angle global orientation
+        '''
 
-        model = create_model(model_type=self.model_type, 
-                             model_root=self.body_model_root, 
+        model = create_model(model_type=self.model_type,
+                             model_root=self.body_model_root,
                              gender=gender,
                              num_betas=10,
-                             num_thetas=self.num_joints)    
-        model_output = set_shape(model, shape)
-        
+                             num_thetas=self.num_joints)
+        model_output = set_shape(model, shape,
+                                 body_pose=body_pose,
+                                 global_orient=global_orient)
+
         self.verts = model_output.vertices.detach().cpu().numpy().squeeze()
         self.joints = model_output.joints.squeeze().detach().cpu().numpy()
         self.gender = gender
@@ -469,22 +482,28 @@ class MeasureSMPLX(Measurer):
 
     def from_body_model(self,
                         gender: str,
-                        shape: torch.tensor):
+                        shape: torch.tensor,
+                        body_pose: torch.tensor = None,
+                        global_orient: torch.tensor = None):
         '''
-        Construct body model from given gender and shape params 
+        Construct body model from given gender and shape params
         of SMPl model.
         :param gender: str, MALE or FEMALE or NEUTRAL
         :param shape: torch.tensor, (1,10) beta parameters
                                     for SMPL model
-        '''  
+        :param body_pose: optional torch.tensor (1,63) axis-angle body pose
+        :param global_orient: optional torch.tensor (1,3) axis-angle global orientation
+        '''
 
-        model = create_model(model_type=self.model_type, 
-                             model_root=self.body_model_root, 
+        model = create_model(model_type=self.model_type,
+                             model_root=self.body_model_root,
                              gender=gender,
                              num_betas=10,
-                             num_thetas=self.num_joints)    
-        model_output = set_shape(model, shape)
-        
+                             num_thetas=self.num_joints)
+        model_output = set_shape(model, shape,
+                                 body_pose=body_pose,
+                                 global_orient=global_orient)
+
         self.verts = model_output.vertices.detach().cpu().numpy().squeeze()
         self.joints = model_output.joints.squeeze().detach().cpu().numpy()
         self.gender = gender

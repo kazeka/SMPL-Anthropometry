@@ -51,6 +51,7 @@ MEASUREMENT_TYPES = {
         "arm length (shoulder to elbow)": MeasurementType.LENGTH,
         "arm length (spine to wrist)": MeasurementType.GEODESIC_LENGTH,
         "apex adjustment": MeasurementType.GEODESIC_LENGTH,
+        "front length": MeasurementType.GEODESIC_LENGTH,
         "crotch height": MeasurementType.LENGTH,
         "Hip circumference max height": MeasurementType.LENGTH
     }
@@ -275,6 +276,10 @@ class SMPLXMeasurementDefinitions():
                 "apex adjustment":
                     (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
                      SMPLX_LANDMARK_INDICES["RIGHT_NIPPLE"]
+                    ),
+                "front length":
+                    (SMPLX_LANDMARK_INDICES["TOP_RIGHT_SHOULDER"],
+                     SMPLX_LANDMARK_INDICES["RIGHT_KNEE"]
                     ),
                }
 

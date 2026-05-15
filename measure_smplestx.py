@@ -31,12 +31,20 @@ from measure import MeasureBody
 from measurement_definitions import STANDARD_LABELS
 
 
-def measure_npz(npz_path, gender: str = "NEUTRAL") -> MeasureBody:
+def measure_npz(npz_path, gender: str = "NEUTRAL", posed: bool = False) -> MeasureBody:
     data = np.load(npz_path)
     betas = torch.tensor(data["betas"], dtype=torch.float32).unsqueeze(0)  # (1, 10)
 
+    body_pose = None
+    global_orient = None
+    if posed:
+        body_pose = torch.tensor(data["body_pose"], dtype=torch.float32).unsqueeze(0)
+        global_orient = torch.zeros(1, 3, dtype=torch.float32)
+
     measurer = MeasureBody("smplx")
-    measurer.from_body_model(gender=gender, shape=betas)
+    measurer.from_body_model(gender=gender, shape=betas,
+                             body_pose=body_pose,
+                             global_orient=global_orient)
     measurer.measure(measurer.all_possible_measurements)
     measurer.label_measurements(STANDARD_LABELS)
     return measurer
@@ -59,6 +67,8 @@ def main():
                         choices=["NEUTRAL", "MALE", "FEMALE"])
     parser.add_argument("--no-viz", action="store_true",
                         help="skip interactive 3-D visualisation")
+    parser.add_argument("--posed", action="store_true",
+                        help="reconstruct body in actual pose using body_pose from .npz")
     args = parser.parse_args()
 
     target = Path(args.path)
@@ -70,7 +80,7 @@ def main():
     results = {}
     for npz in npz_files:
         print(f"  measuring {npz.name} …")
-        results[npz.stem] = measure_npz(npz, gender=args.gender)
+        results[npz.stem] = measure_npz(npz, gender=args.gender, posed=args.posed)
 
     df = summarise(results)
     for file_name, m in results.items():
