@@ -36,6 +36,7 @@ GROUND_TRUTH = {
     "chest circumference": 112.0,
     "waist circumference":  98.0,
     "hip circumference":   104.0,
+    "apex adjustment":      28.0,
     "front length":        117.0,
     "skirt length":         62.0,
 }
