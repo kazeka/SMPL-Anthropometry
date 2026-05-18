@@ -3,7 +3,7 @@ For each 360-video directory under test/, measure all 72 frames and plot:
   - Top subplot:    10 beta coefficients vs view angle
   - Bottom subplot: per-measurement error (predicted - GT) in cm vs view angle
 
-The 72 frames are assumed to span 0–355 ° in equal steps of 5 °.
+The 72 frames are assumed to span 0–360 ° (loop closes at the last frame).
 
 Usage:
   conda run -n smpl python plot_angle_dependency.py
@@ -14,7 +14,6 @@ Usage:
 import argparse
 import http.server
 import os
-import tempfile
 import threading
 from pathlib import Path
 
@@ -25,7 +24,7 @@ from plotly.subplots import make_subplots
 from measure_smplestx import measure_npz, GROUND_TRUTH
 
 N_FRAMES = 72
-ANGLES = np.linspace(0, 360, N_FRAMES, endpoint=False)
+ANGLES = np.linspace(0, 360, N_FRAMES, endpoint=True)
 
 BETA_COLORS = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
@@ -145,21 +144,27 @@ def main():
     for vdir in video_dirs:
         print(f"\n=== {vdir.name} ===")
         data = process_video(vdir, args.gender)
-        fig = build_figure(vdir.name, data)
 
-        tmp = tempfile.NamedTemporaryFile(
-            suffix=".html", prefix=f"{vdir.name}_", delete=False
-        )
-        fig.write_html(tmp.name)
-        tmp.close()
-        html_files.append(tmp.name)
-        print(f"  saved → {tmp.name}")
+        print("\n  --- min |error| across frames ---")
+        for m_name, gt_val in GROUND_TRUTH.items():
+            vals = [e for e in data["errors"].get(m_name, []) if not np.isnan(e)]
+            if not vals:
+                continue
+            min_err = min(abs(e) for e in vals)
+            pct = min_err / gt_val * 100
+            print(f"  {m_name:<35} {min_err:.1f} cm  ({pct:.1f}%)")
+
+        fig = build_figure(vdir.name, data)
+        out_path = vdir / "angle_dependency.html"
+        fig.write_html(str(out_path))
+        html_files.append(out_path)
+        print(f"\n  saved → {out_path}")
 
     if args.no_viz or not html_files:
         return
 
-    # serve all HTML files from the same temp dir
-    serve_dir = os.path.dirname(html_files[0])
+    # serve from the common root so relative paths like <video>/angle_dependency.html work
+    serve_dir = str(root.resolve())
 
     handler = http.server.SimpleHTTPRequestHandler
     httpd = http.server.HTTPServer(("0.0.0.0", 0), handler)
@@ -170,9 +175,9 @@ def main():
     local_ip = socket.gethostbyname(socket.gethostname())
     print("\nServing plots:")
     for f in html_files:
-        name = os.path.basename(f)
-        print(f"  http://localhost:{port}/{name}")
-        print(f"  http://{local_ip}:{port}/{name}")
+        rel = f.relative_to(root.resolve())
+        print(f"  http://localhost:{port}/{rel}")
+        print(f"  http://{local_ip}:{port}/{rel}")
 
     os.chdir(serve_dir)
     try:
@@ -181,8 +186,6 @@ def main():
         pass
     finally:
         httpd.shutdown()
-        for f in html_files:
-            os.unlink(f)
 
 
 if __name__ == "__main__":

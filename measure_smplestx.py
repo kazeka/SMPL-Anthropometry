@@ -124,6 +124,16 @@ def main():
             pct = mae / gt_val * 100
             print(f"  {m_name:<35} {mae:.1f} cm  ({pct:.1f}%)")
 
+        print("\n=== Min error across frames ===")
+        for m_name, gt_val in GROUND_TRUTH.items():
+            values = [m.measurements[m_name] for m in results.values()
+                      if m_name in m.measurements]
+            if not values:
+                continue
+            min_err = min(abs(v - gt_val) for v in values)
+            pct = min_err / gt_val * 100
+            print(f"  {m_name:<35} {min_err:.1f} cm  ({pct:.1f}%)")
+
     if not args.no_viz:
         first_name, first_m = next(iter(results.items()))
         print(f"\nVisualising {first_name} …")
