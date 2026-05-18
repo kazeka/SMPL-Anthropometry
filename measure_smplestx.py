@@ -99,6 +99,14 @@ def main():
         for label, value in m.labeled_measurements.items():
             name = m.labels2names[label]
             print(f"  {label}  {name:<35} {value:.1f} cm")
+        print(f"\n  --- errors vs ground truth ---")
+        for m_name, gt_val in GROUND_TRUTH.items():
+            if m_name not in m.measurements:
+                continue
+            err = m.measurements[m_name] - gt_val
+            pct = err / gt_val * 100
+            sign = "+" if err >= 0 else ""
+            print(f"  {m_name:<35} {sign}{err:.1f} cm  ({sign}{pct:.1f}%)")
 
     if len(results) > 1:
         print("\n=== Mean across files ===")
