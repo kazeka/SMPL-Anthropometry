@@ -18,6 +18,7 @@ Usage:
 
 import argparse
 import http.server
+import json
 import os
 import tempfile
 import threading
@@ -80,7 +81,14 @@ def main():
                         help="skip interactive 3-D visualisation")
     parser.add_argument("--posed", action="store_true",
                         help="reconstruct body in actual pose using body_pose from .npz")
+    parser.add_argument("--ground-truth", metavar="FILE",
+                        help="JSON file with ground-truth measurements (overrides built-in values)")
     args = parser.parse_args()
+
+    ground_truth = GROUND_TRUTH
+    if args.ground_truth:
+        with open(args.ground_truth) as f:
+            ground_truth = json.load(f)
 
     target = Path(args.path)
     npz_files = sorted(target.glob("*.npz")) if target.is_dir() else [target]
@@ -100,7 +108,7 @@ def main():
             name = m.labels2names[label]
             print(f"  {label}  {name:<35} {value:.1f} cm")
         print(f"\n  --- errors vs ground truth ---")
-        for m_name, gt_val in GROUND_TRUTH.items():
+        for m_name, gt_val in ground_truth.items():
             if m_name not in m.measurements:
                 continue
             err = m.measurements[m_name] - gt_val
@@ -115,7 +123,7 @@ def main():
             print(f"  {label}  {name:<35} {df[col].mean():.1f} cm")
 
         print("\n=== MAE vs ground truth ===")
-        for m_name, gt_val in GROUND_TRUTH.items():
+        for m_name, gt_val in ground_truth.items():
             values = [m.measurements[m_name] for m in results.values()
                       if m_name in m.measurements]
             if not values:
@@ -125,7 +133,7 @@ def main():
             print(f"  {m_name:<35} {mae:.1f} cm  ({pct:.1f}%)")
 
         print("\n=== Min error across frames ===")
-        for m_name, gt_val in GROUND_TRUTH.items():
+        for m_name, gt_val in ground_truth.items():
             values = [m.measurements[m_name] for m in results.values()
                       if m_name in m.measurements]
             if not values:
